@@ -1,0 +1,758 @@
+#sub Unique removes duplicate items of an array, preserving original order
+sub Unique{
+   my %seen = ();
+   my @r = ();
+   foreach my $list (@_) {
+      unless ($seen{$list}) {
+         push @r, $list;
+         $seen{$list} = 1;
+      }
+   }
+return @r;
+}
+--------------------
+$ans_a = "0."."0"x$b.(1.25*(2)**$b);#Wanted to avoid scientific notation in the answer
+$ans_a =~ s/0*$//;#trim trailing zeroes
+
+#adds zeroes to a list of zeroes as a string, so it doesn't get turned into scientific notation
+sub moreZ{
+   my $orig = $_[0];
+   my $addZero = $_[1];
+   my $zeroes = substr(10**$addZero, 1); #"everything but the first letter in this string"
+   $orig =~ s/(0{2,})/$1$zeroes/;#adds those many zeroes after the first existing chain of at least 2
+
+   return $orig;
+}
+
+#removes zeroes from a list of zeroes as a string, so it doesn't get turned into scientific notation
+sub fewerZ{
+   my $orig = $_[0];
+   my $takeZero = $_[1];
+   my $zeroes = substr(10**$takeZero, 1); #"everything but the first letter in this string"
+   $orig =~ s/$zeroes//;#removes the first chain of at least that many zeroes
+
+   if(substr($orig, 0,2) eq ".0")   {$orig =~ s/\.0/0./;}#in case you remove 1 zero from a small decimal
+   return $orig;
+}
+--------------------
+#sub getReal gets real number answers and decform's them.
+sub getReal {
+   my $str = $_[0];
+   my @dat = @list = ();
+   $str =~ s|\{||g;
+   $str =~ s|\}||g;
+   @dat = split(/,/,$str);
+   foreach(@dat)
+      { if(index($_, "I") == -1) {push(@list, decform($_, 3));}} #like "if not contains I". Regex is slow, for substrings.
+   return join(",", @list);
+};
+
+---------------------
+#returns a matrix ref of the columns requested
+
+sub getCols
+{
+my @mat = @{$_[0]};
+my @toRet = ();
+my ($start, $stop) = ($_[1], $_[2]);
+
+for($I=0; $I<scalar(@mat); $I++) #because PERL doesn't actually do matrices, scalar gives the number of rows here
+{
+   for($J=$start;$J<=$stop; $J++)
+   {
+      $toRet[$I][$J-$start] = $mat[$I][$J];
+   }
+}
+
+return \@toRet;
+}
+
+---------------------
+#turns an integer into tally
+sub tallyString
+{
+my $count= shift;
+my $str = '';
+   while($count>=5)
+   {
+   $str = $str."\\cancel{||||} \\ ";
+   $count -=5;
+   }
+   while($count>0)
+   {
+   $str = $str."|";
+   $count--;
+   }
+return($str);
+}
+
+----------------
+#these four lines make the sqrt smaller for  a stacked fraction.
+$sinFracNum = sroot($sin2V, 2, "watex");
+$find = "\\\\sqrt";
+$replace = "<s:sqrt>\\overline";
+$sinFracNum =~ s/$find/$replace/g;
+
+----------------
+
+#useful for lists of multiples where one item is bold
+sub multiples{
+   my $base = shift;
+   my $len = shift;
+   my $goal = shift;
+
+   $str = '';
+   for($I = 1; $I<=$len; $I++)
+   {
+      $temp = $base*$I;
+      if($temp==$goal)
+         {$temp = "\<strong\>$temp\</strong\>";}
+      $str = ($str).($temp).', ';
+   }
+   $str = $str.'...';
+  return($str);
+}
+---------------------
+
+#oneSF takes a number, rounds to one significant figure
+#assumes abs(val) >=1; since otherwise we have built-in fxns
+sub oneSF
+{
+my $val = $_[0];
+my $test = abs(int($val/10));
+my $size=0;
+
+   do{
+      $test = int($test/10);
+      $size++;
+   }while($test>0);
+$factor = 10**$size;
+return decform($val/$factor, 0)*$factor;
+}
+--------------
+#coeffs takes a mathematica array and gets numbers; such as coefficeints of a model.
+sub coeffs {
+   my $str = $_[0];
+   my @dat = ();
+   $str =~ s|\{||g;
+   $str =~ s|\}||g;
+   @dat = split(/,/,$str);
+   return @dat;
+};
+
+----------------
+
+#takes "number to round", "precision", and estimates to there.
+sub estimate{
+my $val = $_[0];
+my $acc = $_[1];
+my $roundedVal = int(($val + $acc/2)/$acc)*$acc;
+return ($roundedVal);
+}
+
+---------------
+#sub getReal splits complex numbers into real-only numbers
+#this should, obviously, ONLY be used when imagination comes from rounding and the imaginary part is tiny.
+#this handles real-only, but not imaginary-only, numbers
+sub getReal
+{
+   my $complex = $_[0];
+   my @real = ();
+   $complex =~ s| ||g;
+   @real = split (/\+|-/, $complex);
+   my $PosNeg = substr($complex, 0, 1);
+  
+   if($PosNeg eq "-")
+      {return -1*$real[1];}
+   else
+      {return $real[0];}
+}
+
+---------------
+#extract takes the numerator and denominator from a fraction object.
+#ex: ($num,  $den) = extract(fraction(2,4));
+#if given an integer, that shows up in $den
+sub extract {
+my $str = $_[0];
+my $pos = index($str, '/');
+return (substr($str, 0, $pos), substr($str, $pos+1));
+} 
+
+------------------------
+
+PERL does not have arrays of arrays, or 2-D arrays.  It mocks it up by having a scalar reference to an array when you *think* you're making a 2-D array, and automatically compiling [1][1] as [1]->[1], thus hiding that it's dereferencing the "inner" array for you.
+
+HOWEVER, if you need to pull arrays of arrays, you can forcibly pass-by-value to a hash of arrays, and then recombine the values as arrays.
+
+%quads=(
+1 => \@I,
+2 => \@II,
+3 => \@III,
+4 => \@IV
+);
+
+@ans = split(/,/, join(',', @{$quads{1}}, @{$quads{4}}));
+
+EASIER WAY:
+@test = ([1, 2, 3], [4, 5, 6], [7,8,9]);
+@fThird = (@{$test[0]}, @{$test[2]});
+
+
+-----------------------------
+#The inner loop finds the highest frequency, and stores it for the penultimate tutorial blank
+#the outer loop multiples these values together to produce the LCM
+#returns it as one array, with the LCM as the last value.
+sub findLCM
+{
+   my ($ref) = shift;
+   my @most = (0,0,0,0);
+   my $LCM=1;
+   for($J=0; $J<4; $J++)
+   {
+      for($I=0; $I<4; $I++)
+      {
+      if($most[$J] < $ref->[$I][$J])
+         {$most[$J] = $ref->[$I][$J];}
+      }#N.B.: iterates the array in a different direction than the other subroutine.
+   $LCM *= $primes{$J}**$most[$J];
+   }
+
+   return(@most, $LCM);
+}
+---------------------------
+#scatter puts n pigeons into m holes randomly.
+sub scatter
+{
+   my $n = $_[0];
+   my $m = $_[1];
+   my @hole = ((0) x $m);#size m of all 0's
+   for($I=0; $I<$n; $I++)
+   {
+      $temp= randnum(0,$m-1,1);
+      $hole[$temp]++;
+   }
+   return(@hole);
+}
+
+#puts n pigeons in m holes, weighted so avg is the average value 
+#(counting them as different values)
+sub weightedScatter
+{
+   my $n = $_[0];
+   my $m = $_[1];
+   my $avg = $_[2]-1;#shifts "number" to "slot"
+   my @hole = ((0) x $m);#size m of all 0's
+
+   do{
+   $temp = randnum(0, $m-1,1);
+   $hole[$temp]++;
+   $n--;
+   if($temp!=$avg)
+      {$dist = $temp-$avg;
+      $otherside = -1*($dist/abs($dist));#-1 if temp was higher, etc.
+      $hole[$avg+$otherside] += abs($dist);
+      $n -= abs($dist);}
+}while($n>$m);#so it never has more elements than $n
+$hole[$avg] += $n;
+
+   return(@hole);
+}
+
+
+--------------
+#Subroutine
+#constructor takes a sorted list of primes, and returns a WaTeX string of the primes to their respective powers.
+sub constructor
+{
+my @vals = @{$_[0]};
+push (@vals, "0");#a placeholder so the loop works on the last element
+my $count = 0;
+my $temp = "";
+my @primes = ();
+
+foreach(@vals)
+{
+   if($temp==$vals[$I])
+   {$count++;}
+   else{
+      if($count == 0) {}
+      elsif($count==1) {push(@primes, "$temp");}
+      else {push(@primes, "$temp^{$count}");}
+         $temp = $vals[$I];
+         $count = 1;
+      }
+   } 
+return join(" * ", @primes);
+}
+
+
+
+#takes an ordered array, returns a sorted array of how many each element has.
+sub findFrequency
+{
+     my $count=0;
+     my @freq=();
+     my @array = @_;
+     my $temp = $array[0];
+     my $next = 0;
+     foreach(@array)
+       {
+       if($temp!=$_)
+          {
+          push(@freq, $count);
+          $temp=$_;
+          $count=0;
+          }
+       $count++;
+       }
+     push(@freq, $count);
+return(@freq);
+}
+
+XXXXXXXXXXXXXXXXXXXXX
+#related coding examples of other array/subroutine manipulation
+
+@under= sort{$a <=> $b} ($neg[0], $neg[0], $neg[1], 0, 0);
+#$irr, $irr;
+@over = sort{$a <=> $b} ($deci, $pos[0], $pos[0], $pos[0], $pos[1], $pos[1], $pos[2]);
+@unsorted = pick(14, (@under, "\\sqrt{$irr}", "\\sqrt{$irr}", @over));
+@frequency=findFrequency(@under, $irr, $irr, @over);
+XXXXXXXXXXXXXXXXXXXXX
+
+-------------
+#coef returns the coefficient and sign of an equation- example coef(5-3) = "+ 2"
+#does "+ 0" for values of 0.  To change, add the line "if ($hold==0){return "";}" anywhere except the first or last lines
+sub coef {
+my $val = shift;
+my $hold = $val;
+$val =~ s/^(\d+)/\+ $1/g;
+$val =~ s/^\-/\- /g;
+$val =~ s/^([\+|\-]) 1$/$1 /g;
+
+#regex "cleans up" a coefficient of 1, so manually insert it.
+if(abs($hold)==1){$val = $val.'1';}
+return $val;
+}
+
+------------
+#subroutine
+sub Maker#makes a repetitive string until it reaches a desired value
+#here, x and y should be "either number, desired lcm"
+{
+my $x = shift;
+my $y = shift;
+my $test=$x;
+$str="$x";
+while($test<$y){
+$test+=$x;
+$str= ($str).", ".($test);
+}
+return($str);
+}
+
+----------------
+sub Mixer#makes a mixed number (L/WaTeX) of an improper fraction, leaves other fractions/ints untouched.
+#still errors out with non-integer input.
+{
+   my $frac = shift;
+   my ($n,$d) = (0,0);
+   my $lead="";
+   my $mixed="";
+
+   ($n, $d)= ($frac =~ m/(\d+)/g);
+   if($d==0){$mixed = $n;}
+   elsif($n > $d) 
+   {
+       $lead = int($n/$d)." ";
+       $n = $n%$d;
+       $mixed = $lead."\\frac{$n}{$d}";
+   }
+   else{$mixed = "\\frac{$n}{$d}";}
+return($mixed);
+}
+---------------
+sub Mixer#makes a mixed number of an improper fraction, leaves other fractions/ints untouched.
+#still errors out with non-integer input.
+{
+   my $frac = shift;
+   my ($n,$d) = (0,0);
+   my $lead="";
+   my $mixed="";
+
+   ($n, $d)= ($frac =~ m/(\d+)/g);
+   if($d==0){return($n);}
+   elsif($n > $d) 
+   {
+       $lead = int($n/$d)." ";
+       $n = $n%$d;
+       return($lead.fraction($n, $d));
+   }
+   else{return($frac);}
+}
+----------------
+To check that no calculation is done in a Symbolic Blank:
+ <eqn $PAD = 'devmath'; $floatcount = () = $thisresponse =~ m|([\d\,]*\.?\d+)|g; $thisresponse="" if $floatcount!=4;''>x: <eqn fraction($j,$k)>x - <eqn $b>
+-----------------------------------
+ ($thisresponse,$HINT)=('','Remember to use capital C.') if contains('C')==0 && $thisresponse; 
+-----------------------------------
+
+Making sure something's a fraction in symbolic mode:
+if (!contains('/')) {statement}
+
+-------------------------------
+
+#check the number of matrix permutations
+sub matPerm{
+$loc=0;
+$ans=0;
+$check=0;
+
+foreach(@_){
+$check=$loc+1;
+    while($check<@_){
+    if($_[$loc]>$_[$check]){$ans++;}
+    $check++;
+    };
+$loc++;
+};
+return $ans;
+}
+--------------------------------------
+#sub goodTicks takes (float $min, float $max), and returns a floating-point answer
+#this will always be exactly equal to the default label distance, or exactly half of them.
+#note: this does NOT work on fraction objects; the log10() function cannot handle strings
+sub goodTicks{
+   my $min = $_[0];
+   my $max = $_[1];
+   my $diff = $max - $min; 
+   my $pow = floor(log10($diff))-1; 
+   my $first = ($diff/(10**($pow+1)))%10; #leading digit, not using substr in case of decimal values
+
+    if($first <2)
+      {return 2*(10**$pow);}
+   elsif($first <5)
+      {return 5*(10**$pow);}
+   else
+      {return 10**($pow+1);}
+}
+--------------------------------------
+#roundUp takes (float $unRounded, int $estimate) and rounds to the nearest $estimate above that
+sub roundUp{
+   $unRounded = $_[0];
+   $estimate = $_[1];
+
+   return (floor($unRounded/$estimate)+1)*$estimate;
+}
+-----------------------------------
+#subroutine upOrdinal takes a positive integer, and transforms it into the ordinal number, with the st/rd/th/etc. in superscript 
+sub upOrdinal
+{
+   my $num = shift;
+   my $end = substr(spell_ordinal($num), -2);
+   return ($num."<sup>".($end)."</sup>");
+}
+----------------------------------
+sub wafrac {
+  if($_[0] eq "help")
+  {return 'wafrac($a, $b) or wafrac($c)  <br />
+   Accepts a fraction, integer, or mixed() number input and returns a TeX string of the reduced fraction.'};
+
+  my $str = (@_ == 2)? fraction($_[0],$_[1]) : $_[0];
+  if($str =~ /\./)
+  {die 'ERROR: &wafrac() requires fraction, integer, or mixed number input.'};
+  
+  $str =~ s/(\d+)\/(\d+)/\\frac{$1}{$2}/g;
+  $str =~ s/-\\frac/- \\frac/g;
+  $str =~ s/(\d) \\frac/$1\\frac/g;
+  return $str;
+};
+
+
+sub lafrac {
+my $str = $_[0];
+$str =~ s|(\d+)\/(\d+)| \\dfrac{$1}{$2}|g;
+return $str;
+} 
+
+sub coFrac{
+#coFrac(int_or_frac $str, string $co)
+   my $str = $_[0];
+   my $co = $_[1];
+
+   $str =~ s|(\d+)\/(\d+)| \\frac{$1$co}{$2}|g;  
+   $str =~ s/-\\frac/- \\frac/g;
+   $str =~ s/(\d) \\frac/$1\\frac/g;
+   $str =~ s/(\d+)$/$1$co/g; #add the variable if it's an integer.
+   $str =~ s|1([a-zA-Z]+)|$1|g; #nix situations like "1x"
+    return $str;
+}
+----------------------------------
+#given an integer, with return a symbolic-friendly simplified form of the square root.
+    sub SQ {
+      my $str = $_[0];
+      $str = mathematica("FullSimplify[Sqrt[$str]]");
+      $str =~ s|S|s|g;
+      $str =~ s|(\*)||g;
+      $str =~ s|(\[)|(|g;
+      $str =~ s|(\])|)|g;
+      return $str;
+      }
+XXXXXXXXXXXXXXXXXXXXXXXXXXX
+#given an integer, with return a watex-friendly simplified form of the square root.
+    sub SQwatex {
+      my $str = $_[0];
+      $str = mathematica("FullSimplify[Sqrt[$str]]");
+      $str =~ s|S|\\s|g;
+      $str =~ s|(\*)||g;
+      $str =~ s|(\[)|{|g;
+      $str =~ s|(\])|}|g;
+      return $str;
+      }
+-----------------------------------
+#For sets of ordered pairs- (in this case, two die rolls)
+#Doesn't care about whitespace or () vs [], just that all the pairs are there, nothing else is, and they've got some form of outer brackets.
+#pass it the full answer key
+#And, note this is FITB format, NOT Algebraic
+#prompt used was " (Enter your answer in the form [(die A1, die B1), (die A2, die B2), ...],where each ordered pair is a different possible outcome.) "
+
+sub grade
+{
+my $res = shift; #the answer, from blank
+
+$res =~ s| ||g;#Gets rid of ALL spaces
+$res =~ s|,|, |g;#then inserts one after each comma
+
+print($res);
+$checks=0;
+for($I=0; $I<$t**2; $I++)
+{
+      if ($res =~ m/$pairs[$I]/)#note this isn't picky about () vs []
+          {$checks++;}
+}
+if(length($res) != length($ans)){$checks--;}
+return($checks == $t**2);
+}
+
+_______________________________________
+
+@a = pick(9,-5...5);
+
+$ab = mathematica("{{$a[0], $a[1],$a[2]},{$a[3], $a[4],$a[5]},{$a[6], $a[7],$a[8]}}.{{$b[0], $b[1],$b[2]},{$b[3], $b[4],$b[5]},{$b[6], $b[7],$b[8]}}");#multiplies 3x3 matrices
+$ab = clean($ab);
+@AB = split(/,/,$ab);
+
+
+OR
+@a = (
+[pick(3,-5..5],
+[0,pick(2,-5..5],
+[0,0,2]); #(with actual $a[0][0], etc, in the mathematica)
+
+
+#cleanup makes mathematica syntax usable in symbolic mode
+sub cleanup{
+ my $str = $_[0];
+$str = lc($str);
+      $str =~ s|(\[)|(|g;
+      $str =~ s|(\])|)|g;
+      $str =~ s|(\*)||g;
+      return $str;
+}
+
+sub clean{
+ my $str = $_[0];
+      $str =~ s|(\{)||g;
+      $str =~ s|(\})||g;
+      return $str;
+}
+
+
+$rec = "{".join(',', @a)."}";#Makes one Mathematica vector from an array...
+$ans = "[".join(',', @basis)."]";#Makes one Matlab vector from an array...
+
+$ans = '[';
+for($i = 0; $i<$len; $i++)
+{
+for($j = 0; $j<$dim; $j++)
+{
+$ans = $ans.($basis[$j*$len+$i]).',';
+}
+$ans = substr($ans,0,-1).';';
+}
+$ans=substr($ans,0,-1).']';
+Makes a $lenx$dim matrix from an array
+
+-------------
+
+sub descience
+{
+my $str = shift;
+my $pow=index($str, '.')-1;
+   if(contains('e', $str))
+   {
+      $pow = int(substr($str, -2,2));
+      $str = substr($str, 0, -4)*(10**$pow);
+   }
+#else do nothing
+return ($str, $pow);
+}
+
+------------
+sub showme{
+my $str = $_[0];
+my $show='';
+if($str<0){$show = '- '.(abs($str));}
+elsif($str>0){$show = '+ '.($str);}
+#if str==0; show's already right
+
+return $show;
+}
+
+-------------
+Question list name generator.  Useful mostly for administrative tasks whenever you need to cherry-pick problems by hane.
+
+@x = (16, "18.MI", "18.MI.SA", 20, 22, 24, 26, 28, 29,30, 32, 34, 64, 66, 68, 70);#LarTrig8 4.3. items
+
+$xStr = "";
+foreach $x (@x)
+{
+$xStr = $xStr."LarTrig8 4.3.0".$x.".<br>";
+}
+
+---------------------
+#sub monthEst takes a number and breaks it into "Month X in 19XX".
+sub monthEst
+{
+my $num = shift; 
+my $year = int($num);
+my $period = $num-$year;
+my $text = "";
+
+   $year = 1970+$year;
+   if($year%4==0)
+      {
+      if($period<(31/366))
+         {$text = "January ";}
+      elsif($period<(60/366))
+         {$text = "February ";}
+      elsif($period<(91/366))
+         {$text = "March ";}
+      elsif($period<(121/366))
+         {$text = "April ";}
+      elsif($period<(152/366))
+         {$text = "May ";}
+      elsif($period<(182/366))
+         {$text = "June ";}
+      elsif($period<(213/366))
+         {$text = "July ";}
+      elsif($period<(244/366))
+         {$text = "August ";}
+      elsif($period<(274/366))
+         {$text = "September ";}
+      elsif($period<(305/366))
+         {$text = "October ";}
+      elsif($period<(335/366))
+         {$text = "November ";}
+      else
+         {$text = "December ";}
+      }
+   else #not a leap tear
+      {
+      if($period<(31/365))
+         {$text = "January ";}
+      elsif($period<(59/365))
+         {$text = "February ";}
+      elsif($period<(90/365))
+         {$text = "March ";}
+      elsif($period<(120/365))
+         {$text = "April ";}
+      elsif($period<(151/365))
+         {$text = "May ";}
+      elsif($period<(181/365))
+         {$text = "June ";}
+      elsif($period<(212/365))
+         {$text = "July ";}
+      elsif($period<(243/365))
+         {$text = "August ";}
+      elsif($period<(273/365))
+         {$text = "September ";}
+      elsif($period<(304/365))
+         {$text = "October ";}
+      elsif($period<(334/365))
+         {$text = "November ";}
+      else
+         {$text = "December ";}
+      }
+
+return ($text).($year);
+}
+-------------------------
+#sub eDisp takes (int numerator, int denominator, int powerOfE) and figures out how to display it
+sub eDisp
+{
+   my $num = $_[0];
+   my $den = $_[1];
+   my $pow = $_[2];
+   my $temp = 0;
+   my $str = "";
+
+   if($num==$den)
+      {$str = "e^{$pow}";}
+   elsif(gcd($num,$den)==1)
+      {$str = "\\frac{${kD}e^{$pow}}{$den}";}
+   elsif(gcd($num,$den)==$num)
+      {
+      $temp = $den/$num;
+      $str= "\\frac{e^{$pow}}{$temp}";
+      }
+   elsif(gcd($num,$den)==$den)
+      {
+      $temp = $num/$den;
+      $str = "${temp}e^{$pow}";
+      }
+   else
+      {
+      $temp = gcd($num,$den);
+      $num /=$temp;
+      $den /=$temp;
+      $str = "\\frac{${num}e^{$pow}}{$den}";
+      }
+
+   return $str;
+}
+--------------------
+#examples on how to use it.
+@yN3 = EulerDiff($xNo, $yNo, $delX, 0, 4);
+$N3Str = join(", ", map("{".($_/2).",$yN3[$_]}", 0..8)); #for a linechart to plot it
+
+#sub EulerDiff takes the euler's method estimate of a differential equation.
+sub dy
+{
+my ($x,$y,$dx) = (@_);
+return ($x/$y)*$dx;
+}
+
+
+sub EulerDiff
+{
+my($startX, $startY, $dx, $back, $forth) = @_;#back & forth are the staring & ending X-vals
+my $tempX = $startX;
+my $tempY = $startY;
+my @yVals = ();
+
+while($tempX > $back){
+$tempY += dy($tempX, $tempY, -$dx);#the diffEQ solved for y, remember to match your formula
+$tempX += -$dx;
+push @yVals, $tempY;
+}
+@yVals = reverse(@yVals);
+$tempY = $startY;
+$tempX = $startX;
+push @yVals, $tempY;
+while($tempX < $forth){
+$tempY += dy($tempX, $tempY, $dx);#the diffEQ solved for y, remember to match your formula
+$tempX += $dx;
+push @yVals, $tempY;
+}
+return @yVals;
+}

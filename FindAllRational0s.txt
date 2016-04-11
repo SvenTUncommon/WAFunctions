@@ -1,0 +1,53 @@
+#sub allFactors takes an integer and returns a list of all factors of the given integer
+sub allFactors
+{
+   my $input = abs($_[0]); #method designed for positive integers only
+   my $counter = 0;	 # Counter for dividing operations.
+   my $div = 0;	 # Division result. 
+   my @factors=();
+   push (@factors, $input);
+   # Start counter from two, up to half the value of the input.
+   for ($counter = 2; $counter <= int($input / 2); $counter++)
+   {
+      $div = $input / $counter;
+      unless ($div =~ /\./)#unless contains ".", just a harder to read version of "if integer" 
+      {
+         push (@factors, $div);
+      }
+   }
+   push (@factors, 1);
+   return (@factors);
+}
+
+#sub RationalZeroes gives all possible rational zeros, given the list of all factors of the leading term and of the constant term.
+#this version also deletes duplicates.  
+sub RationalZeroes
+{
+my @lead = @{$_[0]};
+my @const= @{$_[1]};
+my @zeroes = ();
+
+foreach my $num (@const) #all factors of the constant term
+   {
+   foreach my $den (@lead)# all factors of the leading coefficient
+      {
+      push(@zeroes, fraction($num, $den));
+      push(@zeroes, fraction(-$num, $den));
+      }
+   }
+@zeroes = sort{$a<=>$b} Unique(@zeroes); #sorts and deletes duplicates
+return (@zeroes);
+}
+
+#sub Unique removes duplicate items of an array, preserving original order
+sub Unique{
+   my %seen = ();
+   my @r = ();
+   foreach my $list (@_) {
+      unless ($seen{$list}) {
+         push @r, $list;
+      $seen{$list} = 1;
+      }
+   }
+   return @r;
+}

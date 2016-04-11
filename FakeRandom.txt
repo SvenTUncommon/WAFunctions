@@ -1,0 +1,79 @@
+#scatter puts n pigeons into m holes randomly.
+sub scatter
+{
+   my $n = $_[0];
+   my $m = $_[1];
+   my @hole = ((0) x $m);#size m of all 0's
+   for($I=0; $I<$n; $I++)
+   {
+      $temp= randnum(0,$m-1,1);
+      $hole[$temp]++;
+   }
+   return(@hole);
+}
+
+#puts n pigeons in m holes, weighted so avg is the average value 
+#(counting them as different values)
+sub weightedScatter
+{
+   my $n = $_[0];
+   my $m = $_[1];
+   my $avg = $_[2]-1;#shifts "number" to "slot"
+   my @hole = ((0) x $m);#size m of all 0's
+
+   do{
+   $temp = randnum(0, $m-1,1);
+   $hole[$temp]++;
+   $n--;
+   if($temp!=$avg)
+      {$dist = $temp-$avg;
+      $otherside = -1*($dist/abs($dist));#-1 if temp was higher, etc.
+      $hole[$avg+$otherside] += abs($dist);
+      $n -= abs($dist);}
+}while($n>$m);#so it never has more elements than $n
+$hole[$avg] += $n;
+
+   return(@hole);
+}
+
+
+#takes an ordered array, returns a sorted array of how many each element has.
+sub findFrequency
+{
+     my $count=0;
+     my @freq=();
+     my @array = @_;
+     my $temp = $array[0];
+     my $next = 0;
+     foreach(@array)
+       {
+       if($temp!=$_)
+          {
+          push(@freq, $count);
+          $temp=$_;
+          $count=0;
+          }
+       $count++;
+       }
+     push(@freq, $count);
+return(@freq);
+}
+
+sub Mixer#makes a mixed number of an improper fraction, leaves other fractions/ints untouched.
+#still errors out with non-integer input.
+{
+   my $frac = shift;
+   my ($n,$d) = (0,0);
+   my $lead="";
+   my $mixed="";
+
+   ($n, $d)= ($frac =~ m/(\d+)/g);
+   if($d==0){return($n);}
+   elsif($n > $d) 
+   {
+       $lead = int($n/$d)." ";
+       $n = $n%$d;
+       return($lead.fraction($n, $d));
+   }
+   else{return($frac);}
+}
